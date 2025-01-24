@@ -13,7 +13,8 @@ You can run this MCP server directly using npx. Add the following configuration 
 ```json
 {
   "axiom": {
-    "command": "npx -y mcp-server-axiom",
+    "command": "npx",
+    "args": ["-y", "mcp-server-axiom"],
     "env": {
       "AXIOM_TOKEN": "<AXIOM_TOKEN_HERE>",
       "AXIOM_URL": "https://api.axiom.co",
