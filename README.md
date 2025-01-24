@@ -1,29 +1,50 @@
 # MCP Server for Axiom
 
-An MCP server implementation for Axiom that enables AI agents to query data using Axiom Processing Language (APL).
+A JavaScript port of the [official Axiom MCP server](https://github.com/axiomhq/mcp-server-axiom) that enables AI agents to query data using Axiom Processing Language (APL).
 
-## Installation
+This implementation provides the same functionality as the original Go version but packaged as an npm module for easier integration with Node.js environments.
+
+## Installation & Usage
+
+### MCP Configuration
+
+You can run this MCP server directly using npx. Add the following configuration to your MCP configuration file:
+
+```json
+{
+  "axiom": {
+    "command": "npx -y mcp-server-axiom",
+    "env": {
+      "AXIOM_TOKEN": "<AXIOM_TOKEN_HERE>",
+      "AXIOM_URL": "https://api.axiom.co",
+      "AXIOM_ORG_ID": "<AXIOM_ORG_ID_HERE>"
+    }
+  }
+}
+```
+
+### Local Development & Testing
+
+#### Installation
 
 ```bash
 npm install -g mcp-server-axiom
 ```
 
-## Usage
-
-### Environment Variables
+#### Environment Variables
 
 The server can be configured using environment variables:
 
 - `AXIOM_TOKEN` (required): Your Axiom API token
-- `AXIOM_URL` (optional): Custom Axiom API URL
-- `AXIOM_ORG_ID` (optional): Your Axiom organization ID
+- `AXIOM_ORG_ID` (required): Your Axiom organization ID
+- `AXIOM_URL` (optional): Custom Axiom API URL (defaults to https://api.axiom.co)
 - `AXIOM_QUERY_RATE` (optional): Queries per second limit (default: 1)
 - `AXIOM_QUERY_BURST` (optional): Query burst capacity (default: 1)
 - `AXIOM_DATASETS_RATE` (optional): Dataset list operations per second (default: 1)
 - `AXIOM_DATASETS_BURST` (optional): Dataset list burst capacity (default: 1)
 - `PORT` (optional): Server port (default: 3000)
 
-### Running the Server
+#### Running the Server Locally
 
 1. Using environment variables:
 
