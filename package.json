@@ -31,6 +31,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axiomhq/mcp-server-axiom"
+    "url": "https://github.com/ThetaBird/mcp-server-axiom-js"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -9,7 +9,7 @@ app.use(express.json());
 // Configuration
 const config = {
   token: process.env.AXIOM_TOKEN,
-  url: process.env.AXIOM_URL,
+  url: process.env.AXIOM_URL || "https://api.axiom.co",
   orgId: process.env.AXIOM_ORG_ID,
   queryRateLimit: parseFloat(process.env.AXIOM_QUERY_RATE || "1"),
   queryRateBurst: parseInt(process.env.AXIOM_QUERY_BURST || "1"),
