@@ -1,10 +1,11 @@
 require("dotenv").config();
-const express = require("express");
 const { Client } = require("@axiomhq/axiom-node");
 const { RateLimiter } = require("limiter");
-
-const app = express();
-app.use(express.json());
+const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
+const {
+  StdioServerTransport,
+} = require("@modelcontextprotocol/sdk/server/stdio.js");
+const { z } = require("zod");
 
 // Configuration
 const config = {
@@ -42,16 +43,43 @@ const datasetsLimiter = new RateLimiter({
   interval: "second",
 });
 
-// MCP Implementation info
-const implementation = {
-  name: "axiom-mcp",
-  version: process.env.npm_package_version || "dev",
-};
+// Create MCP server
+const server = new McpServer({
+  name: "mcp-server-axiom",
+  version: process.env.npm_package_version || "1.0.0",
+});
 
-// Tool definitions
-const tools = [
+// Define tools using the MCP SDK
+server.tool(
+  "queryApl",
   {
-    name: "queryApl",
+    query: z.string().describe("The APL query to run"),
+  },
+  async ({ query }) => {
+    const remainingTokens = queryLimiter.tryRemoveTokens(1);
+    if (!remainingTokens) {
+      throw new Error("Rate limit exceeded for queries");
+    }
+
+    if (!query) {
+      throw new Error("Query must not be empty");
+    }
+
+    try {
+      const result = await client.query(query);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Query failed: ${error.message}`);
+    }
+  },
+  {
     description: `Query Axiom datasets using Axiom Processing Language (APL).
 Instructions:
 1. Query must be a valid APL query string
@@ -61,105 +89,40 @@ Instructions:
 5. Be selective with projections
 6. Always restrict time range
 7. Never guess schema`,
-    parameters: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "The APL query to run",
-        },
-      },
-    },
+  }
+);
+
+server.tool(
+  "listDatasets",
+  {},
+  async () => {
+    const remainingTokens = datasetsLimiter.tryRemoveTokens(1);
+    if (!remainingTokens) {
+      throw new Error("Rate limit exceeded for dataset operations");
+    }
+
+    try {
+      const datasets = await client.datasets.list();
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(datasets),
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list datasets: ${error.message}`);
+    }
   },
   {
-    name: "listDatasets",
     description: "List all available Axiom datasets",
-    parameters: {
-      type: "object",
-      properties: {},
-    },
-  },
-];
-
-// Endpoints
-app.get("/", (req, res) => {
-  res.json(implementation);
-});
-
-app.get("/tools", (req, res) => {
-  res.json(tools);
-});
-
-app.post("/tools/:name/call", async (req, res) => {
-  const { name } = req.params;
-  const { arguments: args } = req.body;
-
-  try {
-    switch (name) {
-      case "queryApl": {
-        const remainingTokens = queryLimiter.tryRemoveTokens(1);
-        if (!remainingTokens) {
-          return res
-            .status(429)
-            .json({ error: "Rate limit exceeded for queries" });
-        }
-
-        const query = args?.query;
-        if (!query) {
-          return res.status(400).json({ error: "Query must not be empty" });
-        }
-
-        const result = await client.query(query);
-        res.json({
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(result),
-            },
-          ],
-        });
-        break;
-      }
-
-      case "listDatasets": {
-        const remainingTokens = datasetsLimiter.tryRemoveTokens(1);
-        if (!remainingTokens) {
-          return res
-            .status(429)
-            .json({ error: "Rate limit exceeded for dataset operations" });
-        }
-
-        const datasets = await client.datasets.list();
-        res.json({
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(datasets),
-            },
-          ],
-        });
-        break;
-      }
-
-      default:
-        res.status(404).json({ error: "Tool not found" });
-    }
-  } catch (error) {
-    console.error(`Error executing tool ${name}:`, error);
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
-const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
-  console.log(`MCP server listening at http://localhost:${port}`);
-});
-
-// Handle shutdown gracefully
-process.on("SIGINT", () => {
-  console.log("\nGracefully shutting down...");
-  server.close(() => {
-    console.log("Server closed");
-    process.exit(0);
-  });
+// Start receiving messages on stdin and sending messages on stdout
+const transport = new StdioServerTransport();
+server.connect(transport).catch((error) => {
+  console.error("Failed to connect transport:", error);
+  process.exit(1);
 });
