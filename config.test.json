@@ -1,0 +1,9 @@
+{
+  "token": "test-token",
+  "url": "https://api.axiom.co",
+  "orgId": "test-org",
+  "queryRate": 2,
+  "queryBurst": 5,
+  "datasetsRate": 1,
+  "datasetsBurst": 2
+}
