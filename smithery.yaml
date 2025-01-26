@@ -1,0 +1,45 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - axiomToken
+      - axiomOrgId
+    properties:
+      axiomToken:
+        type: string
+        description: Your Axiom API token.
+      axiomOrgId:
+        type: string
+        description: Your Axiom organization ID.
+      axiomUrl:
+        type: string
+        default: https://api.axiom.co
+        description: The Axiom API URL.
+      axiomQueryRate:
+        type: number
+        default: 1
+        description: Queries per second limit.
+      axiomQueryBurst:
+        type: number
+        default: 1
+        description: Query burst capacity.
+      axiomDatasetsRate:
+        type: number
+        default: 1
+        description: Dataset list operations per second.
+      axiomDatasetsBurst:
+        type: number
+        default: 1
+        description: Dataset list burst capacity.
+      port:
+        type: number
+        default: 3000
+        description: Server port.
+  commandFunction:
+    # A function that produces the CLI command to start the MCP on stdio.
+    |-
+    (config) => ({command:'node', args:['bin/cli.js'], env: {AXIOM_TOKEN: config.axiomToken, AXIOM_ORG_ID: config.axiomOrgId, AXIOM_URL: config.axiomUrl || 'https://api.axiom.co', AXIOM_QUERY_RATE: config.axiomQueryRate?.toString() || '1', AXIOM_QUERY_BURST: config.axiomQueryBurst?.toString() || '1', AXIOM_DATASETS_RATE: config.axiomDatasetsRate?.toString() || '1', AXIOM_DATASETS_BURST: config.axiomDatasetsBurst?.toString() || '1', PORT: config.port?.toString() || '3000'}})
