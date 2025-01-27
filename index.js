@@ -6,11 +6,16 @@ const {
   StdioServerTransport,
 } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { z } = require("zod");
-
+const {
+  getStringifiedSchema,
+  convertSchemaToJSON,
+  fieldsSchema,
+} = require("./helpers/convertToSchemaJSON.js");
 // Configuration
 const config = {
   token: process.env.AXIOM_TOKEN,
   url: process.env.AXIOM_URL || "https://api.axiom.co",
+  internalUrl: "https://app.axiom.co/api/internal",
   orgId: process.env.AXIOM_ORG_ID,
   queryRateLimit: parseFloat(process.env.AXIOM_QUERY_RATE || "1"),
   queryRateBurst: parseInt(process.env.AXIOM_QUERY_BURST || "1"),
@@ -158,6 +163,71 @@ server.tool(
           {
             type: "text",
             text: JSON.stringify(datasets),
+          },
+        ],
+      };
+    } catch (error) {
+      throw new Error(`Failed to list datasets: ${error.message}`);
+    }
+  }
+);
+
+const datasetInfoSchema = z.object({
+  compressedBytes: z.number(),
+  compressedBytesHuman: z.string(),
+  created: z.string(),
+  fields: fieldsSchema,
+  inputBytes: z.number(),
+  inputBytesHuman: z.string(),
+  maxTime: z.string(),
+  minTime: z.string(),
+  name: z.string(),
+  numBlocks: z.number(),
+  numEvents: z.number(),
+  numFields: z.number(),
+  quickQueries: z.null(),
+  who: z.string(),
+});
+
+server.tool(
+  "getDatasetInfoAndSchema",
+  "Get dataset info and schema",
+  {
+    dataset: z.string().describe("The dataset to get info and schema for"),
+  },
+  async ({ dataset }) => {
+    const remainingTokens = datasetsLimiter.tryRemoveTokens(1);
+    if (!remainingTokens) {
+      throw new Error("Rate limit exceeded for dataset operations");
+    }
+
+    try {
+      // Axiom client does not provide access to internal routes. We need to hit the API directly.
+      const response = await fetch(
+        `${config.internalUrl}/datasets/${dataset}/info`,
+        {
+          headers: {
+            Authorization: `Bearer ${config.token}`,
+            "X-AXIOM-ORG-ID": config.orgId,
+          },
+        }
+      );
+
+      const rawData = await response.json();
+
+      // Validate the response data
+      const data = datasetInfoSchema.parse(rawData);
+
+      // Convert the fields to type definitions string
+      const typeDefsString = getStringifiedSchema(
+        convertSchemaToJSON(data.fields)
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ ...data, fields: typeDefsString }), // Override the fields with the type definitions
           },
         ],
       };
