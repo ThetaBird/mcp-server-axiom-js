@@ -1,5 +1,7 @@
 # MCP Server for Axiom
 
+[![smithery badge](https://smithery.ai/badge/@ThetaBird/mcp-server-axiom-js)](https://smithery.ai/server/@ThetaBird/mcp-server-axiom-js)
+
 A JavaScript port of the [official Axiom MCP server](https://github.com/axiomhq/mcp-server-axiom) that enables AI agents to query data using Axiom Processing Language (APL).
 
 <a href="https://glama.ai/mcp/servers/8hxxw8uenu">
@@ -9,6 +11,14 @@ A JavaScript port of the [official Axiom MCP server](https://github.com/axiomhq/
 This implementation provides the same functionality as the original Go version but packaged as an npm module for easier integration with Node.js environments.
 
 ## Installation & Usage
+
+### Installing via Smithery
+
+To install Axiom MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@ThetaBird/mcp-server-axiom-js):
+
+```bash
+npx -y @smithery/cli install @ThetaBird/mcp-server-axiom-js --client claude
+```
 
 ### MCP Configuration
 
