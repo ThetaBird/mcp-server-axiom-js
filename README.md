@@ -2,6 +2,10 @@
 
 A JavaScript port of the [official Axiom MCP server](https://github.com/axiomhq/mcp-server-axiom) that enables AI agents to query data using Axiom Processing Language (APL).
 
+<a href="https://glama.ai/mcp/servers/8hxxw8uenu">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/8hxxw8uenu/badge" />
+</a>
+
 This implementation provides the same functionality as the original Go version but packaged as an npm module for easier integration with Node.js environments.
 
 ## Installation & Usage
